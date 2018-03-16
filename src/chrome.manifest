@@ -1,0 +1,5 @@
+content   lattedockunread                 chrome/content/
+skin      lattedockunread   classic/1.0   chrome/skin/
+locale    lattedockunread   en-US         chrome/locale/en-US/
+
+overlay chrome://messenger/content/messenger.xul chrome://lattedockunread/content/lattedockunread.xul
