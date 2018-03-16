@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<!DOCTYPE dialog SYSTEM "chrome://lattedockunread/locale/options.dtd">
+
+<prefwindow id="lattedockunread-prefs"
+     title="LatteDock Unread Count &options;"
+     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+ 
+	<prefpane id="lattedockunread-pane" label="LatteDock Unread Count &settings;">
+	  <preferences>
+		<preference id="traverse_deep" name="extensions.lattedock-unread.traverse-deep" type="bool"/>
+	  </preferences>
+	 
+	  <hbox align="center">
+		<label control="traverse_deep_pref" value="Count messages in subfolders: "/>
+		<checkbox preference="traverse_deep" id="traverse_deep_pref" />
+	  </hbox>
+	</prefpane>
+ 
+</prefwindow>
