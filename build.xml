@@ -1,0 +1,42 @@
+<project name="LatteDock Unread Count" default="package" basedir=".">
+	<description>
+		builds lattedock thunderbird extension
+	</description>
+
+	<property name="src" location="src" />
+	<property name="build" location="build" />
+	<property name="dist" location="dist" />
+	<property name="update-script" value="update-badge.py" />
+	<property name="lattedock-icon" value="icon.png" />
+
+	<target name="init">
+		<mkdir dir="${dist}" />
+		<mkdir dir="${build}" />
+	</target>
+
+	<target name="package" depends="init">
+		<copy todir="${build}">
+			<fileset dir="${src}">
+				<exclude name="**/${lattedock-icon}" />
+                        </fileset>
+			<filterset>
+				<filtersfile file="build.properties" />
+			</filterset>
+		</copy>
+		<copy file="${src}/${lattedock-icon}" toFile="${build}/${lattedock-icon}" />
+		<zip destfile="${dist}/lattedock-thunderbird.xpi">
+			<zipfileset dir="${build}">
+				<exclude name="**/${update-script}" />
+			</zipfileset>
+			<zipfileset dir="${build}" filemode="555">
+				<include name="**/${update-script}" />
+			</zipfileset>
+		</zip>
+	</target>
+
+	<target name="clean">
+		<delete dir="${build}" />
+		<delete dir="${dist}" />
+	</target>
+
+</project>
