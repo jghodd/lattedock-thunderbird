@@ -1,3 +1,5 @@
+'use strict';
+
 var lattedockunread = {
 	MSG_FOLDER_FLAG_INBOX: 0x1000,
 	onLoad : function(e) {
@@ -6,7 +8,7 @@ var lattedockunread = {
 		// read all the preferences
 		const PREF_SERVICE = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
 		this.prefs = PREF_SERVICE.getBranch("extensions.lattedock-unread.");
-		this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);
+		this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch);
 		this.prefs.addObserver("", this, false);
      
      	this.traverseDeep = this.prefs.getBoolPref("traverse-deep");
@@ -29,25 +31,76 @@ var lattedockunread = {
 		this.updateUnreadCount(0, true);
 	},
 	
-	updateUnreadCount: function(x, blockingProcess){
+	updateUnreadCount: function(x, blockingProcess) {
 		dump("Calling update count\n");
 		dump("Finding path...\n");
-		
-		const DIR_SERVICE = new Components.Constructor("@mozilla.org/file/directory_service;1","nsIProperties");
-		try { 
-			path=(new DIR_SERVICE()).get("ProfD", Components.interfaces.nsIFile).path; 
-		} catch (e) {
-			alert(error);
-		}
-		
-		path = path + "/extensions/{03ae01b6-6d68-11e7-842c-4af176302efd}/chrome/content/update-badge.py";
-		
-		dump("Found path: " + path + "\n");
 
-		var file = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);		
+		var fileUtils = Cu.import("resource://gre/modules/FileUtils.jsm").FileUtils;
+
+		var homePath = "";
+
+		// get the user's home directory
+		const ENV_SERVICE = new Components.Constructor("@mozilla.org/file/directory_service;1","nsIProperties");
+		try { 
+			homePath = (new ENV_SERVICE()).get("Home", Components.interfaces.nsIFile).path; 
+		} catch (e) {
+			alert(e);
+		}
+		dump("HOME: " + homePath + "\n");
+
+		var pySubDir = ".thunderbird-lattedockunread";
+		var pyPath   = homePath + "/" + pySubDir + "/update-badge.py";
+
+		dump("pyPath: " + pyPath + "\n");
+
+		// create the extraction director for update-badge.py if it doesnt exist
+		fileUtils.getDir("Home", [pySubDir], true);
+
+		var pyFile = new fileUtils.File(pyPath);
+		
+		// check if update-badge.py has already been extracted
+                if (pyFile.exists() == false) {
+			dump("Extracting " + pyPath + "\n");
+
+			var xpiPath = "";
+
+			// find out where the xpi file was installed
+			const DIR_SERVICE = new Components.Constructor("@mozilla.org/file/directory_service;1","nsIProperties");
+			try { 
+				xpiPath=(new DIR_SERVICE()).get("ProfD", Components.interfaces.nsIFile).path; 
+			} catch (e) {
+				alert(e);
+			}
+		
+			xpiPath = xpiPath + "/extensions/{03ae01b6-6d68-11e7-842c-4af176302efd}.xpi";
+
+			var xpiFile = new fileUtils.File(xpiPath);
+
+                	if (xpiFile.exists() == false) {
+                        	xpiPath = "/usr/lib/thunderbird/extensions/{03ae01b6-6d68-11e7-842c-4af176302efd}.xpi";
+			}
+			dump("xpiPath: " + xpiPath + "\n");
+
+			var zipReader = Cc["@mozilla.org/libjar/zip-reader;1"].createInstance(Ci.nsIZipReader);
+			Cu.import('resource://gre/modules/osfile.jsm');
+
+			var nsiFileXpi = new FileUtils.File(xpiPath);
+    
+			try {
+				// extract update-badge.py from the xpi file
+				zipReader.open(nsiFileXpi);
+				zipReader.extract("chrome/content/update-badge.py", pyFile);
+			} catch (ex) {
+				alert(ex);
+			} finally {
+				zipReader.close();
+			}
+		}
+
+		var file = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsIFile);		
 		file.initWithPath("/usr/bin/env");
 		
-		var args = ["python", path, x];
+		var args = ["python", pyPath, x];
 		var process = Components.classes["@mozilla.org/process/util;1"].createInstance(Components.interfaces.nsIProcess);
 		process.init(file);
 		
@@ -83,7 +136,7 @@ var lattedockunread = {
 	},
 
 	getTotalCount: function(rootFolder) {
-		if(rootFolder.getAllFoldersWithFlag) {
+		if (rootFolder.getAllFoldersWithFlag) {
 			return this._getTotalCountTB2(rootFolder);
 		} else {
 			return this._getTotalCountTB3(rootFolder);
