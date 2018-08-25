@@ -8,6 +8,7 @@
 	<property name="dist" location="dist" />
 	<property name="update-script" value="update-badge.py" />
 	<property name="lattedock-icon" value="icon.png" />
+	<property file="build.properties" />
 
 	<target name="init">
 		<mkdir dir="${dist}" />
@@ -24,7 +25,7 @@
 			</filterset>
 		</copy>
 		<copy file="${src}/${lattedock-icon}" toFile="${build}/${lattedock-icon}" />
-		<zip destfile="${dist}/lattedock-thunderbird.xpi">
+		<zip destfile="${dist}/thunderbird-lattedockunread-${VERSION}.xpi">
 			<zipfileset dir="${build}">
 				<exclude name="**/${update-script}" />
 			</zipfileset>
